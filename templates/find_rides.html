@@ -281,16 +281,9 @@ Find Ride
 
 
                     <!-- Booking Button -->
-                    <a
-                        href="/book-ride/{{ ride.id }}"
-                        class="mt-6 flex items-center justify-center gap-2
-                               w-full bg-blue-600 hover:bg-blue-700
-                               active:scale-[0.99]
-                               text-white py-3.5 px-5
-                               rounded-2xl font-bold
-                               shadow-md shadow-blue-200
-                               hover:shadow-lg hover:shadow-blue-200
-                               transition duration-200">
+                    <form method="POST" action="/book-ride/{{ ride.id }}" class="w-full">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="w-full cursor-pointer mt-6 flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white py-3.5 px-5 rounded-2xl font-bold shadow-md shadow-blue-200 hover:shadow-lg hover:shadow-blue-200 transition duration-200">
 
                         <span>Book Ride</span>
 
@@ -300,7 +293,8 @@ Find Ride
                             →
                         </span>
 
-                    </a>
+                    </button>
+</form>
 
                 </div>
 

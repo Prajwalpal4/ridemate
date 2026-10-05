@@ -32,7 +32,7 @@ def verify_csrf():
     """Call from before_request. Rejects any POST without the right token."""
     if request.method != "POST":
         return
-    sent = request.form.get("csrf_token", "")
+    sent = request.form.get("csrf_token", "") or request.headers.get("X-CSRF-Token", "")
     expected = session.get("_csrf", "")
     if not expected or not hmac.compare_digest(sent, expected):
         abort(400, "Invalid or missing security token. Please go back, refresh the page and try again.")

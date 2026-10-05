@@ -42,6 +42,7 @@ Login to continue
 {% endwith %}
 
 <form method="POST" class="mt-8">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 <input
 type="email"

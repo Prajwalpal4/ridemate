@@ -71,7 +71,7 @@ Dashboard
                 </p>
 
                 <h2 class="text-4xl font-bold text-blue-600 mt-3">
-                    12
+                    {{ stats.active_rides }}
                 </h2>
 
                 <p class="text-sm text-gray-400 mt-2">
@@ -106,7 +106,7 @@ Dashboard
                 </p>
 
                 <h2 class="text-4xl font-bold text-green-600 mt-3">
-                    18
+                    {{ stats.drivers }}
                 </h2>
 
                 <p class="text-sm text-gray-400 mt-2">
@@ -141,7 +141,7 @@ Dashboard
                 </p>
 
                 <h2 class="text-4xl font-bold text-orange-500 mt-3">
-                    31
+                    {{ stats.passengers }}
                 </h2>
 
                 <p class="text-sm text-gray-400 mt-2">
@@ -176,7 +176,7 @@ Dashboard
                 </p>
 
                 <h2 class="text-4xl font-bold text-purple-600 mt-3">
-                    5
+                    {{ stats.bookings }}
                 </h2>
 
                 <p class="text-sm text-gray-400 mt-2">
@@ -222,6 +222,7 @@ Dashboard
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
 
+        {% if role == "Driver" %}
         <!-- Offer Ride -->
 
         <a
@@ -256,8 +257,7 @@ Dashboard
             </div>
 
         </a>
-
-
+        {% endif %}
 
         <!-- Find Ride -->
 

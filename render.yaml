@@ -1,11 +1,17 @@
 services:
   - type: web
-    name: ridemate
+    name: ridemate-final-year
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    # ONE worker + threads: the app creates its tables at start-up, and several
+    # workers doing that at the same moment can collide on a fresh database.
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 60
+    healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
       - key: DATABASE_URL
-        sync: false
+        sync: false          # paste your Supabase POOLER connection string here
       - key: SECRET_KEY
-        generateValue: true
+        generateValue: true  # Render creates a long random value for you

@@ -57,7 +57,7 @@ def ride_tracking(booking_id):
     if not ride:
         return redirect("/my-bookings")
 
-    return render_template("ride_tracking.html", ride=ride)
+    return render_template("ride_tracking.html", ride=ride, is_driver=(ride["driver_id"] == session["user_id"]))
 
 
 @tracking.route("/api/ride-location/<int:booking_id>", methods=["GET"])

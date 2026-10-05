@@ -174,7 +174,7 @@ Ride Tracking
                     </h2>
 
                     <p class="text-gray-500 text-sm mt-1">
-                        Live location within Nagpur, Maharashtra
+                        Live GPS location and route
                     </p>
 
                 </div>
@@ -615,7 +615,7 @@ const NAGPUR_RADIUS_KM = 50;
    MAP INITIALIZATION
    ========================================================= */
 
-const map = L.map("map").setView(
+const map = L.map("map", { scrollWheelZoom: true }).setView(
     [
         NAGPUR_CENTER.lat,
         NAGPUR_CENTER.lng
@@ -885,7 +885,7 @@ async function findDropoffLocation() {
 
         const searchQuery =
             destination +
-            ", Nagpur, Maharashtra, India";
+            ", Current location, India";
 
 
         const response =
@@ -1025,7 +1025,7 @@ async function findDropoffLocation() {
 
                 destination +
 
-                "<br><small>Nagpur, Maharashtra</small>"
+                "<br><small>Current location</small>"
 
             );
 
@@ -1090,261 +1090,79 @@ async function findDropoffLocation() {
    ========================================================= */
 
 function startTracking() {
-
     if (!navigator.geolocation) {
-
-        showStatus(
-            "❌ Geolocation is not supported by your browser.",
-            "error"
-        );
-
+        showStatus("❌ Geolocation is not supported by your browser.", "error");
         return;
-
     }
 
-
-    showStatus(
-        "📍 Getting your current location...",
-        "info"
-    );
-
-
-    if (watchId !== null) {
-
-        navigator.geolocation.clearWatch(
-            watchId
-        );
-
-    }
-
-
-    watchId =
-        navigator.geolocation.watchPosition(
-
-            function(position) {
-
-                const latitude =
-                    position.coords.latitude;
-
-
-                const longitude =
-                    position.coords.longitude;
-
-
-                /*
-                 * Check Nagpur boundary.
-                 */
-
-                if (
-                    !isInsideNagpur(
-                        latitude,
-                        longitude
-                    )
-                ) {
-
-                    showStatus(
-                        "⚠️ Your current location is outside the Nagpur ride service area.",
-                        "warning"
-                    );
-
-
-                    if (userMarker) {
-
-                        map.removeLayer(
-                            userMarker
-                        );
-
-                        userMarker =
-                            null;
-
-                    }
-
-                    return;
-
-                }
-
-
-                currentLat =
-                    latitude;
-
-
-                currentLng =
-                    longitude;
-
-
-                /*
-                 * Create user marker.
-                 */
-
-                if (!userMarker) {
-
-                    userMarker =
-                        L.marker(
-                            [
-                                currentLat,
-                                currentLng
-                            ]
-                        )
-                        .addTo(map)
-                        .bindPopup(
-                            "<b>📍 You are here</b><br>" +
-                            "Nagpur, Maharashtra"
-                        );
-
-                }
-
-                else {
-
-                    userMarker.setLatLng(
-                        [
-                            currentLat,
-                            currentLng
-                        ]
-                    );
-
-                }
-
-
-                /*
-                 * Update popup.
-                 */
-
-                userMarker.setPopupContent(
-
-                    "<b>📍 You are here</b><br>" +
-
-                    "Nagpur, Maharashtra<br>" +
-
-                    "<small>" +
-
-                    currentLat.toFixed(6) +
-
-                    ", " +
-
-                    currentLng.toFixed(6) +
-
-                    "</small>"
-
-                );
-
-
-                /*
-                 * Update route.
-                 */
-
-                if (dropoffMarker) {
-
-                    const destinationPosition =
-                        dropoffMarker.getLatLng();
-
-
-                    const now =
-                        Date.now();
-
-
-                    if (
-                        now -
-                        lastRouteTime >=
-                        ROUTE_UPDATE_INTERVAL
-                    ) {
-
-                        lastRouteTime =
-                            now;
-
-
-                        calculateRoute(
-
-                            currentLat,
-
-                            currentLng,
-
-                            destinationPosition.lat,
-
-                            destinationPosition.lng
-
-                        );
-
-                    }
-
-                }
-
-
-                showStatus(
-                    "🟢 Live location tracking active in Nagpur.",
-                    "success"
-                );
-
-            },
-
-
-            function(error) {
-
-                console.error(
-                    "Location error:",
-                    error
-                );
-
-
-                let message =
-                    "Unable to get your location.";
-
-
-                if (
-                    error.code ===
-                    error.PERMISSION_DENIED
-                ) {
-
-                    message =
-                        "❌ Location permission was denied. Please allow location access in your browser.";
-
-                }
-
-                else if (
-                    error.code ===
-                    error.POSITION_UNAVAILABLE
-                ) {
-
-                    message =
-                        "❌ Your location is currently unavailable.";
-
-                }
-
-                else if (
-                    error.code ===
-                    error.TIMEOUT
-                ) {
-
-                    message =
-                        "⏳ Location request timed out. Trying again...";
-
-                }
-
-
-                showStatus(
-                    message,
-                    "error"
-                );
-
-            },
-
-
-            {
-
-                enableHighAccuracy:
-                    true,
-
-                maximumAge:
-                    5000,
-
-                timeout:
-                    10000
-
+    showStatus("📍 Getting your current location...", "info");
+
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+    watchId = navigator.geolocation.watchPosition(async function(position) {
+        currentLat = position.coords.latitude;
+        currentLng = position.coords.longitude;
+
+        if (!userMarker) {
+            userMarker = L.marker([currentLat, currentLng]).addTo(map);
+        } else {
+            userMarker.setLatLng([currentLat, currentLng]);
+        }
+        userMarker.bindPopup("<b>📍 Current location</b><br>" + currentLat.toFixed(6) + ", " + currentLng.toFixed(6));
+
+        map.setView([currentLat, currentLng], Math.max(map.getZoom(), 15));
+
+        {% if is_driver %}
+        try {
+            const response = await fetch("/api/ride-location/{{ ride.booking_id }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    latitude: currentLat,
+                    longitude: currentLng,
+                    accuracy: position.coords.accuracy
+                })
+            });
+            if (!response.ok) console.warn("Location update failed", response.status);
+        } catch (e) { console.warn("Location update error", e); }
+        {% endif %}
+
+        if (dropoffMarker) {
+            const destination = dropoffMarker.getLatLng();
+            const now = Date.now();
+            if (now - lastRouteTime >= ROUTE_UPDATE_INTERVAL) {
+                lastRouteTime = now;
+                calculateRoute(currentLat, currentLng, destination.lat, destination.lng);
             }
+        }
+        showStatus("🟢 Live GPS tracking active.", "success");
+    }, function(error) {
+        console.error("Location error:", error);
+        showStatus(error.code === 1 ? "❌ Please allow location access in your browser." : "❌ Unable to get your current location.", "error");
+    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
 
-        );
-
+    {% if not is_driver %}
+    // Passenger: read the driver's latest location from PostgreSQL every 3 seconds.
+    setInterval(async function() {
+        try {
+            const response = await fetch("/api/ride-location/{{ ride.booking_id }}");
+            const data = await response.json();
+            if (!data.location) return;
+            const lat = Number(data.location.latitude), lng = Number(data.location.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            if (!driverMarker) {
+                driverMarker = L.marker([lat, lng]).addTo(map).bindPopup("🚗 Driver location");
+            } else {
+                driverMarker.setLatLng([lat, lng]);
+            }
+            showStatus("🟢 Driver location updated.", "success");
+        } catch (e) { console.warn("Driver location fetch failed", e); }
+    }, 3000);
+    {% endif %}
 }
-
 
 /* =========================================================
    ROUTE + ETA + DISTANCE
@@ -1357,33 +1175,10 @@ async function calculateRoute(
     endLng
 ) {
 
-    if (
-        !isInsideNagpur(
-            startLat,
-            startLng
-        )
-    ) {
-
-        return;
-
-    }
+    if (!Number.isFinite(startLat) || !Number.isFinite(startLng)) return;
 
 
-    if (
-        !isInsideNagpur(
-            endLat,
-            endLng
-        )
-    ) {
-
-        showStatus(
-            "❌ Destination is outside the Nagpur service area.",
-            "error"
-        );
-
-        return;
-
-    }
+    if (!Number.isFinite(endLat) || !Number.isFinite(endLng)) return;
 
 
     try {
@@ -1577,7 +1372,7 @@ function getCurrentLocation() {
         ) {
 
             showStatus(
-                "⚠️ Your location is outside the Nagpur service area.",
+                "⚠️ Your location is outside the supported service area.",
                 "warning"
             );
 
@@ -1727,7 +1522,7 @@ async function sendSOS() {
     ) {
 
         alert(
-            "Your current location is outside the Nagpur service area."
+            "Your current location is outside the supported service area."
         );
 
 
@@ -1757,7 +1552,10 @@ async function sendSOS() {
                     headers: {
 
                         "Content-Type":
-                            "application/json"
+                            "application/json",
+
+                        "X-CSRF-Token":
+                            "{{ csrf_token() }}"
 
                     },
 

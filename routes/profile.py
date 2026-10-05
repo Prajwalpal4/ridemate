@@ -13,66 +13,31 @@ def view_profile():
     conn = get_connection()
     cursor = conn.cursor()
 
-
-    # =========================
-    # UPDATE PROFILE
-    # =========================
-
+    # Update vehicle number
     if request.method == "POST":
 
-        vehicle_number = request.form.get(
-            "vehicle_number",
-            ""
-        ).strip()
-
-        emergency_contact_name = request.form.get(
-            "emergency_contact_name",
-            ""
-        ).strip()
-
-        emergency_contact_phone = request.form.get(
-            "emergency_contact_phone",
-            ""
-        ).strip()
-
+        vehicle_number = request.form.get("vehicle_number", "").strip()
 
         cursor.execute(
             """
             UPDATE users
-
-            SET
-                vehicle_number=%s,
-                emergency_contact_name=%s,
-                emergency_contact_phone=%s
-
+            SET vehicle_number=%s
             WHERE id=%s
             """,
-
             (
                 vehicle_number,
-                emergency_contact_name,
-                emergency_contact_phone,
                 session["user_id"]
             )
         )
 
-
         conn.commit()
 
-
-        # Update session vehicle number
+        # Update session if required
         session["vehicle_number"] = vehicle_number
 
+        flash("Vehicle number updated successfully!")
 
-        flash(
-            "Profile updated successfully!"
-        )
-
-
-    # =========================
-    # GET USER INFORMATION
-    # =========================
-
+    # Get current user
     cursor.execute(
         """
         SELECT
@@ -81,27 +46,19 @@ def view_profile():
             email,
             department,
             role,
-            vehicle_number,
-            emergency_contact_name,
-            emergency_contact_phone
-
+            vehicle_number
         FROM users
-
         WHERE id=%s
         """,
-
         (session["user_id"],)
     )
-
 
     user = cursor.fetchone()
 
     conn.close()
 
-
     if not user:
         return redirect("/login")
-
 
     return render_template(
         "profile.html",
