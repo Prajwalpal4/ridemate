@@ -1,0 +1,337 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block page_title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<!-- ===================================================== -->
+<!-- WELCOME BANNER -->
+<!-- ===================================================== -->
+
+<div class="bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl shadow-lg p-8 text-white mb-8">
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+        <div>
+
+            <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">
+                Smart Campus Ride Sharing
+            </p>
+
+            <h1 class="text-3xl md:text-4xl font-bold mt-2">
+                Welcome back, {{ session.get("user_name", "User") }} 👋
+            </h1>
+
+            <p class="text-blue-100 mt-3 max-w-2xl">
+                Find a ride, offer a seat, and make your campus commute easier.
+            </p>
+
+        </div>
+
+
+        <div class="hidden md:flex">
+
+            <div class="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center">
+
+                <i class="fas fa-car-side text-5xl"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- STATISTICS -->
+<!-- ===================================================== -->
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+
+    <!-- Active Rides -->
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-gray-500 text-sm font-medium">
+                    Active Rides
+                </p>
+
+                <h2 class="text-4xl font-bold text-blue-600 mt-3">
+                    {{ stats.active_rides }}
+                </h2>
+
+                <p class="text-sm text-gray-400 mt-2">
+                    Available campus rides
+                </p>
+
+            </div>
+
+
+            <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+
+                <i class="fas fa-car text-xl"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Drivers -->
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-gray-500 text-sm font-medium">
+                    Drivers
+                </p>
+
+                <h2 class="text-4xl font-bold text-green-600 mt-3">
+                    {{ stats.drivers }}
+                </h2>
+
+                <p class="text-sm text-gray-400 mt-2">
+                    Registered drivers
+                </p>
+
+            </div>
+
+
+            <div class="w-14 h-14 bg-green-100 text-green-600 rounded-xl flex items-center justify-center">
+
+                <i class="fas fa-user-tie text-xl"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Passengers -->
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-gray-500 text-sm font-medium">
+                    Passengers
+                </p>
+
+                <h2 class="text-4xl font-bold text-orange-500 mt-3">
+                    {{ stats.passengers }}
+                </h2>
+
+                <p class="text-sm text-gray-400 mt-2">
+                    Registered passengers
+                </p>
+
+            </div>
+
+
+            <div class="w-14 h-14 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center">
+
+                <i class="fas fa-users text-xl"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Bookings -->
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <p class="text-gray-500 text-sm font-medium">
+                    Bookings
+                </p>
+
+                <h2 class="text-4xl font-bold text-purple-600 mt-3">
+                    {{ stats.bookings }}
+                </h2>
+
+                <p class="text-sm text-gray-400 mt-2">
+                    Total bookings
+                </p>
+
+            </div>
+
+
+            <div class="w-14 h-14 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+
+                <i class="fas fa-ticket text-xl"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- QUICK ACTIONS -->
+<!-- ===================================================== -->
+
+<div class="mt-10">
+
+    <div class="mb-5">
+
+        <h2 class="text-2xl font-bold text-gray-800">
+            Quick Actions
+        </h2>
+
+        <p class="text-gray-500 mt-1">
+            Get started with RideMate.
+        </p>
+
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+        {% if role == "Driver" %}
+        <!-- Offer Ride -->
+
+        <a
+            href="/offer-ride"
+            class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:-translate-y-1 transition"
+        >
+
+            <div class="flex items-center gap-5">
+
+                <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition">
+
+                    <i class="fas fa-car-side text-xl"></i>
+
+                </div>
+
+
+                <div class="flex-1">
+
+                    <h3 class="text-xl font-bold text-gray-800">
+                        Offer a Ride
+                    </h3>
+
+                    <p class="text-gray-500 mt-1">
+                        Share your ride with other campus members.
+                    </p>
+
+                </div>
+
+
+                <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 transition"></i>
+
+            </div>
+
+        </a>
+        {% endif %}
+
+        <!-- Find Ride -->
+
+        <a
+            href="/find-rides"
+            class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:-translate-y-1 transition"
+        >
+
+            <div class="flex items-center gap-5">
+
+                <div class="w-14 h-14 bg-green-100 text-green-600 rounded-xl flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition">
+
+                    <i class="fas fa-search text-xl"></i>
+
+                </div>
+
+
+                <div class="flex-1">
+
+                    <h3 class="text-xl font-bold text-gray-800">
+                        Find a Ride
+                    </h3>
+
+                    <p class="text-gray-500 mt-1">
+                        Search for available rides on campus.
+                    </p>
+
+                </div>
+
+
+                <i class="fas fa-arrow-right text-gray-400 group-hover:text-green-600 transition"></i>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- WELCOME / INFORMATION -->
+<!-- ===================================================== -->
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 mt-10 p-8">
+
+    <div class="flex flex-col md:flex-row gap-6">
+
+        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+
+            <i class="fas fa-circle-info text-xl"></i>
+
+        </div>
+
+
+        <div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+                About RideMate
+            </h2>
+
+            <p class="mt-3 text-gray-600 leading-relaxed">
+                RideMate is a smart campus ride-sharing platform that helps
+                students and employees connect with available rides.
+                Use the sidebar to offer rides, find rides, manage bookings,
+                check notifications, and update your profile.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideMate Register</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-blue-50 min-h-screen flex items-center justify-center py-10">
+
+<div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl p-10">
+
+    <h1 class="text-4xl font-bold text-center text-blue-600">
+        RideMate
+    </h1>
+
+    <p class="text-center text-gray-500 mt-2">
+        Create Your Campus Account
+    </p>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mt-5 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/register" class="mt-8">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="grid md:grid-cols-2 gap-5">
+
+            <div>
+                <label class="font-semibold">Full Name</label>
+                <input
+                    type="text"
+                    name="full_name"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3"
+                    placeholder="Enter Full Name">
+            </div>
+
+            <div>
+                <label class="font-semibold">Student ID</label>
+                <input
+                    type="text"
+                    name="student_id"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3"
+                    placeholder="Student ID">
+            </div>
+
+            <div>
+                <label class="font-semibold">College Email</label>
+                <input
+                    type="email"
+                    name="email"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3"
+                    placeholder="student@college.edu">
+            </div>
+
+            <div>
+                <label class="font-semibold">Department</label>
+
+                <select
+                    name="department"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3">
+
+                    <option value="">Select Department</option>
+                    <option>CSE</option>
+                    <option>IT</option>
+                    <option>AIML</option>
+                    <option>ECE</option>
+                    <option>Mechanical</option>
+                    <option>Civil</option>
+
+                </select>
+
+            </div>
+
+            <div>
+                <label class="font-semibold">Year</label>
+
+                <select
+                    name="year"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3">
+
+                    <option value="">Select Year</option>
+                    <option>1st Year</option>
+                    <option>2nd Year</option>
+                    <option>3rd Year</option>
+                    <option>4th Year</option>
+
+                </select>
+
+            </div>
+
+            <div>
+                <label class="font-semibold">Role</label>
+
+                <select
+                    name="role"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3">
+
+                    <option>Passenger</option>
+                    <option>Driver</option>
+
+                </select>
+
+            </div>
+
+            <div>
+                <label class="font-semibold">Password</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3"
+                    placeholder="Password">
+
+            </div>
+
+            <div>
+                <label class="font-semibold">Confirm Password</label>
+
+                <input
+                    type="password"
+                    name="confirm_password"
+                    required
+                    class="w-full mt-2 border rounded-lg p-3"
+                    placeholder="Confirm Password">
+
+            </div>
+
+        </div>
+
+        <button
+            type="submit"
+            class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-bold">
+
+            Create Account
+
+        </button>
+
+    </form>
+
+    <div class="text-center mt-6">
+
+        Already have an account?
+
+        <a href="/login" class="text-blue-600 font-bold">
+
+            Login
+
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

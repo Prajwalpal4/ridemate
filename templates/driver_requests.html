@@ -1,0 +1,354 @@
+{% extends "layouts/base.html" %}
+
+{% block page_title %}
+Booking Requests
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+
+        <h1 class="text-3xl font-bold text-gray-800">
+            Booking Requests
+        </h1>
+
+        <p class="text-gray-500 mt-2">
+            Manage passengers who requested to join your rides.
+        </p>
+
+    </div>
+
+
+    {% if requests %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {% for request in requests %}
+
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+
+                <!-- Header -->
+                <div class="p-6 border-b border-gray-100">
+
+                    <div class="flex justify-between items-start">
+
+                        <div>
+
+                            <p class="text-sm text-gray-500">
+                                Booking #{{ request.booking_id }}
+                            </p>
+
+                            <h2 class="text-xl font-bold text-gray-800 mt-1">
+                                {{ request.passenger_name }}
+                            </h2>
+
+                            <p class="text-sm text-gray-500">
+                                Passenger
+                            </p>
+
+                        </div>
+
+
+                        <!-- Status -->
+
+                        {% if request.booking_status == "Pending" %}
+
+                            <span class="px-4 py-2 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold">
+                                🟡 Pending
+                            </span>
+
+                        {% elif request.booking_status == "Accepted" %}
+
+                            <span class="px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+                                🟢 Accepted
+                            </span>
+
+                        {% elif request.booking_status == "Rejected" %}
+
+                            <span class="px-4 py-2 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+                                🔴 Rejected
+                            </span>
+
+                        {% else %}
+
+                            <span class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">
+                                {{ request.booking_status }}
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Ride Information -->
+
+                <div class="p-6">
+
+                    <div class="bg-gray-50 rounded-xl p-5">
+
+                        <p class="text-xs font-semibold text-gray-500 mb-4">
+                            RIDE DETAILS
+                        </p>
+
+
+                        <!-- From -->
+
+                        <div class="flex items-center gap-4">
+
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+
+                                <i class="fas fa-location-dot"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="text-xs text-gray-500">
+                                    FROM
+                                </p>
+
+                                <p class="font-semibold text-gray-800">
+                                    {{ request.from_location }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Connector -->
+
+                        <div class="border-l-2 border-dashed border-gray-300 h-6 ml-5"></div>
+
+
+                        <!-- Destination -->
+
+                        <div class="flex items-center gap-4">
+
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+
+                                <i class="fas fa-flag-checkered"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="text-xs text-gray-500">
+                                    TO
+                                </p>
+
+                                <p class="font-semibold text-gray-800">
+                                    {{ request.to_location }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Date / Time / Vehicle -->
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+
+                        <div class="bg-gray-50 rounded-xl p-4">
+
+                            <p class="text-xs text-gray-500">
+                                DATE
+                            </p>
+
+                            <p class="font-semibold text-gray-800 mt-1">
+
+                                <i class="fas fa-calendar text-blue-600 mr-1"></i>
+
+                                {{ request.ride_date }}
+
+                            </p>
+
+                        </div>
+
+
+                        <div class="bg-gray-50 rounded-xl p-4">
+
+                            <p class="text-xs text-gray-500">
+                                TIME
+                            </p>
+
+                            <p class="font-semibold text-gray-800 mt-1">
+
+                                <i class="fas fa-clock text-blue-600 mr-1"></i>
+
+                                {{ request.ride_time }}
+
+                            </p>
+
+                        </div>
+
+
+                        <div class="bg-gray-50 rounded-xl p-4">
+
+                            <p class="text-xs text-gray-500">
+                                VEHICLE
+                            </p>
+
+                            <p class="font-semibold text-gray-800 mt-1">
+
+                                <i class="fas fa-car text-blue-600 mr-1"></i>
+
+                                {{ request.vehicle_number }}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Passenger -->
+
+                    <div class="mt-5 bg-blue-50 rounded-xl p-4">
+
+                        <div class="flex items-center gap-4">
+
+                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center">
+
+                                <i class="fas fa-user text-lg"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="text-xs text-gray-500">
+                                    PASSENGER
+                                </p>
+
+                                <p class="font-bold text-gray-800">
+                                    {{ request.passenger_name }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Actions -->
+
+                    {% if request.booking_status == "Pending" %}
+
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+
+                        <form method="POST" action="/accept-booking/{{ request.booking_id }}" onsubmit="return confirm('Accept this booking request?');" class="w-full">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="w-full cursor-pointer text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
+
+                            <i class="fas fa-check mr-2"></i>
+
+                            Accept
+
+                        </button>
+</form>
+
+
+                        <form method="POST" action="/reject-booking/{{ request.booking_id }}" onsubmit="return confirm('Reject this booking request?');" class="w-full">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="w-full cursor-pointer text-center bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold transition">
+
+                            <i class="fas fa-xmark mr-2"></i>
+
+                            Reject
+
+                        </button>
+</form>
+
+                    </div>
+
+                    {% elif request.booking_status == "Accepted" %}
+
+                    <div class="mt-6">
+
+                        <div class="w-full text-center bg-green-100 text-green-700 py-3 rounded-xl font-semibold">
+
+                            <i class="fas fa-circle-check mr-2"></i>
+
+                            Booking Accepted
+
+                        </div>
+
+                    </div>
+
+                    {% elif request.booking_status == "Rejected" %}
+
+                    <div class="mt-6">
+
+                        <div class="w-full text-center bg-red-100 text-red-700 py-3 rounded-xl font-semibold">
+
+                            <i class="fas fa-circle-xmark mr-2"></i>
+
+                            Booking Rejected
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <!-- Empty State -->
+
+        <div class="bg-white rounded-2xl shadow-md p-12 text-center">
+
+            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+
+                <i class="fas fa-users text-3xl"></i>
+
+            </div>
+
+
+            <h2 class="text-2xl font-bold text-gray-800 mt-6">
+                No Booking Requests
+            </h2>
+
+
+            <p class="text-gray-500 mt-2 max-w-md mx-auto">
+
+                When students book one of your rides,
+                their requests will appear here.
+
+            </p>
+
+
+            <a
+                href="/offer-ride"
+                class="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+
+                <i class="fas fa-car mr-2"></i>
+
+                Offer a Ride
+
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
