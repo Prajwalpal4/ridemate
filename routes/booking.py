@@ -1,6 +1,5 @@
 from flask import Blueprint, redirect, session, flash, render_template
 from database import get_connection
-from helpers import driver_required, login_required
 
 booking = Blueprint("booking", __name__)
 
@@ -9,64 +8,86 @@ booking = Blueprint("booking", __name__)
 # BOOK RIDE
 # =========================================================
 
-@booking.route("/book-ride/<int:ride_id>", methods=["POST"])
-@login_required
+@booking.route("/book-ride/<int:ride_id>")
 def book_ride(ride_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM rides WHERE id=%s", (ride_id,))
+    cursor.execute(
+        """
+        SELECT *
+        FROM rides
+        WHERE id=%s
+        """,
+        (ride_id,)
+    )
+
     ride = cursor.fetchone()
 
-    if not ride or ride["status"] != "Available":
+    if not ride:
         conn.close()
-        flash("Ride not found or no longer available.")
+        flash("Ride not found.")
         return redirect("/find-rides")
 
+    # Driver cannot book own ride
     if ride["driver_id"] == session["user_id"]:
         conn.close()
         flash("You cannot book your own ride.")
         return redirect("/find-rides")
 
+    # Check available seats
     if ride["available_seats"] <= 0:
         conn.close()
         flash("This ride is full.")
         return redirect("/find-rides")
 
+    # Check duplicate booking
     cursor.execute(
-        "SELECT 1 FROM bookings WHERE ride_id=%s AND passenger_id=%s",
-        (ride_id, session["user_id"]),
+        """
+        SELECT *
+        FROM bookings
+        WHERE ride_id=%s
+        AND passenger_id=%s
+        """,
+        (
+            ride_id,
+            session["user_id"]
+        )
     )
-    if cursor.fetchone():
+
+    existing_booking = cursor.fetchone()
+
+    if existing_booking:
         conn.close()
         flash("You have already booked this ride.")
         return redirect("/find-rides")
 
-    try:
-        cursor.execute(
-            "INSERT INTO bookings (ride_id, passenger_id, booking_status) VALUES (%s, %s, %s)",
-            (ride_id, session["user_id"], "Pending"),
+    # Create booking
+    cursor.execute(
+        """
+        INSERT INTO bookings
+        (
+            ride_id,
+            passenger_id,
+            booking_status
         )
+        VALUES (%s, %s, %s)
+        """,
+        (
+            ride_id,
+            session["user_id"],
+            "Pending"
+        )
+    )
 
-        # let the driver know there is a new request
-        cursor.execute("SELECT email FROM users WHERE id=%s", (ride["driver_id"],))
-        driver = cursor.fetchone()
-        if driver:
-            cursor.execute(
-                "INSERT INTO notifications (email, title, message, status) VALUES (%s, %s, %s, %s)",
-                (driver["email"], "New Booking Request",
-                 session["user_name"] + " requested a seat on your ride to " + ride["to_location"] + ".",
-                 "Unread"),
-            )
-        conn.commit()
-        flash("Ride booked successfully! Waiting for the driver to accept.")
-    except Exception:
-        # the unique index rejects a duplicate booking even if two clicks race
-        conn.rollback()
-        flash("You have already booked this ride.")
-    finally:
-        conn.close()
+    conn.commit()
+    conn.close()
+
+    flash("Ride booked successfully!")
 
     return redirect("/find-rides")
 
@@ -127,50 +148,80 @@ def my_bookings():
 # CANCEL BOOKING
 # =========================================================
 
-@booking.route("/cancel-booking/<int:booking_id>", methods=["POST"])
-@login_required
+@booking.route("/cancel-booking/<int:booking_id>")
 def cancel_booking(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    try:
-        cursor.execute(
-            "SELECT ride_id, booking_status FROM bookings WHERE id=%s AND passenger_id=%s",
-            (booking_id, session["user_id"]),
+    cursor.execute(
+        """
+        SELECT *
+
+        FROM bookings
+
+        WHERE id=%s
+        AND passenger_id=%s
+        """,
+        (
+            booking_id,
+            session["user_id"]
         )
-        record = cursor.fetchone()
+    )
 
-        if not record:
-            flash("Booking not found.")
-        elif record["booking_status"] not in ("Pending", "Accepted"):
-            flash("This booking cannot be cancelled.")
-        else:
-            was_accepted = record["booking_status"] == "Accepted"
+    booking_record = cursor.fetchone()
 
-            cursor.execute(
-                "DELETE FROM bookings WHERE id=%s AND passenger_id=%s AND booking_status IN ('Pending', 'Accepted')",
-                (booking_id, session["user_id"]),
-            )
-
-            # A seat is only taken when the driver ACCEPTS, so only an accepted
-            # booking gives a seat back. (Pending bookings never reduced seats.)
-            if was_accepted and cursor.rowcount == 1:
-                cursor.execute(
-                    """
-                    UPDATE rides
-                    SET available_seats = available_seats + 1
-                    WHERE id=%s AND available_seats < total_seats
-                    """,
-                    (record["ride_id"],),
-                )
-            conn.commit()
-            flash("Booking cancelled successfully.")
-    except Exception:
-        conn.rollback()
-        flash("Could not cancel the booking. Please try again.")
-    finally:
+    if not booking_record:
         conn.close()
+        flash("Booking not found.")
+        return redirect("/my-bookings")
+
+    if booking_record["booking_status"] not in (
+        "Pending",
+        "Accepted"
+    ):
+        conn.close()
+        flash("This booking cannot be cancelled.")
+        return redirect("/my-bookings")
+
+    ride_id = booking_record["ride_id"]
+
+    # Delete booking
+    cursor.execute(
+        """
+        DELETE FROM bookings
+        WHERE id=%s
+        """,
+        (booking_id,)
+    )
+
+    # Restore seat
+    cursor.execute(
+        """
+        UPDATE rides
+
+        SET available_seats =
+            CASE
+
+                WHEN available_seats < total_seats
+                THEN available_seats + 1
+
+                ELSE total_seats
+
+            END
+
+        WHERE id=%s
+        """,
+        (ride_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Booking cancelled successfully.")
 
     return redirect("/my-bookings")
 
@@ -180,8 +231,10 @@ def cancel_booking(booking_id):
 # =========================================================
 
 @booking.route("/driver-requests")
-@driver_required
 def driver_requests():
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -234,70 +287,139 @@ def driver_requests():
 # ACCEPT BOOKING
 # =========================================================
 
-@booking.route("/accept-booking/<int:booking_id>", methods=["POST"])
-@driver_required
+@booking.route("/accept-booking/<int:booking_id>")
 def accept_booking(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    try:
-        cursor.execute(
-            """
-            SELECT bookings.ride_id, bookings.booking_status, bookings.passenger_id,
-                   rides.driver_id, rides.to_location
-            FROM bookings
-            INNER JOIN rides ON bookings.ride_id = rides.id
-            WHERE bookings.id=%s
-            """,
-            (booking_id,),
-        )
-        record = cursor.fetchone()
+    cursor.execute(
+        """
+        SELECT
 
-        if not record:
-            flash("Booking request not found.")
-        elif record["driver_id"] != session["user_id"]:
-            flash("You are not authorized to manage this booking.")
-        elif record["booking_status"] != "Pending":
-            flash("Only pending requests can be accepted.")
-        else:
-            # Step 1: take a seat ONLY if one is still free. Doing the check inside the
-            # UPDATE itself makes it atomic, so two quick accepts can never overbook.
-            cursor.execute(
-                """
-                UPDATE rides SET available_seats = available_seats - 1
-                WHERE id=%s AND available_seats > 0 AND status='Available'
-                """,
-                (record["ride_id"],),
-            )
-            if cursor.rowcount == 0:
-                conn.rollback()
-                flash("No seats are available.")
-            else:
-                # Step 2: mark the booking accepted (only if it is still Pending)
-                cursor.execute(
-                    "UPDATE bookings SET booking_status='Accepted' WHERE id=%s AND booking_status='Pending'",
-                    (booking_id,),
-                )
-                if cursor.rowcount == 0:
-                    conn.rollback()
-                    flash("This request was already handled.")
-                else:
-                    cursor.execute("SELECT email FROM users WHERE id=%s", (record["passenger_id"],))
-                    passenger = cursor.fetchone()
-                    if passenger:
-                        cursor.execute(
-                            "INSERT INTO notifications (email, title, message, status) VALUES (%s, %s, %s, %s)",
-                            (passenger["email"], "Ride Booking Accepted",
-                             "Your ride booking has been accepted by the driver.", "Unread"),
-                        )
-                    conn.commit()
-                    flash("Booking accepted successfully.")
-    except Exception:
-        conn.rollback()
-        flash("Could not accept the booking. Please try again.")
-    finally:
+            bookings.id,
+            bookings.ride_id,
+            bookings.booking_status,
+
+            rides.driver_id,
+            rides.available_seats
+
+        FROM bookings
+
+        INNER JOIN rides
+        ON bookings.ride_id = rides.id
+
+        WHERE bookings.id=%s
+        """,
+        (
+            booking_id,
+        )
+    )
+
+    record = cursor.fetchone()
+
+    if not record:
         conn.close()
+        flash("Booking request not found.")
+        return redirect("/driver-requests")
+
+    # Driver security check
+    if record["driver_id"] != session["user_id"]:
+        conn.close()
+        flash("You are not authorized to manage this booking.")
+        return redirect("/driver-requests")
+
+    if record["booking_status"] == "Accepted":
+        conn.close()
+        flash("This booking is already accepted.")
+        return redirect("/driver-requests")
+
+    if record["booking_status"] == "Rejected":
+        conn.close()
+        flash("This booking has already been rejected.")
+        return redirect("/driver-requests")
+
+    if record["available_seats"] <= 0:
+        conn.close()
+        flash("No seats are available.")
+        return redirect("/driver-requests")
+
+    # Accept booking
+    cursor.execute(
+        """
+        UPDATE bookings
+
+        SET booking_status='Accepted'
+
+        WHERE id=%s
+        """,
+        (
+            booking_id,
+        )
+    )
+    
+    # Get passenger email
+    cursor.execute(
+        """
+        SELECT users.email
+        FROM bookings
+        
+        INNER JOIN users
+        ON bookings.passenger_id = users.id
+        
+        WHERE bookings.id=%s
+        """,
+        (
+           booking_id,
+        )
+    )
+    
+
+    passenger = cursor.fetchone()
+
+    if passenger:
+
+     cursor.execute(
+        """
+        INSERT INTO notifications
+        (
+            email,
+            title,
+            message,
+            status
+        )
+        VALUES (%s, %s, %s, %s)
+        """,
+        (
+            passenger["email"],
+            "Ride Booking Accepted",
+            "Your ride booking has been accepted by the driver.",
+            "Unread"
+        )
+    )
+
+    # Reduce available seats
+    cursor.execute(
+        """
+        UPDATE rides
+
+        SET available_seats = available_seats - 1
+
+        WHERE id=%s
+        AND available_seats > 0
+        """,
+        (
+            record["ride_id"],
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Booking accepted successfully.")
 
     return redirect("/driver-requests")
 
@@ -306,58 +428,119 @@ def accept_booking(booking_id):
 # REJECT BOOKING
 # =========================================================
 
-@booking.route("/reject-booking/<int:booking_id>", methods=["POST"])
-@driver_required
+@booking.route("/reject-booking/<int:booking_id>")
 def reject_booking(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    try:
-        cursor.execute(
-            """
-            SELECT bookings.booking_status, bookings.passenger_id, rides.driver_id
-            FROM bookings
-            INNER JOIN rides ON bookings.ride_id = rides.id
-            WHERE bookings.id=%s
-            """,
-            (booking_id,),
+    cursor.execute(
+        """
+        SELECT
+
+            bookings.id,
+            bookings.booking_status,
+            bookings.ride_id,
+
+            rides.driver_id
+
+        FROM bookings
+
+        INNER JOIN rides
+        ON bookings.ride_id = rides.id
+
+        WHERE bookings.id=%s
+        """,
+        (
+            booking_id,
         )
-        record = cursor.fetchone()
+    )
 
-        if not record:
-            flash("Booking request not found.")
-        elif record["driver_id"] != session["user_id"]:
-            flash("You are not authorized to manage this booking.")
-        elif record["booking_status"] != "Pending":
-            flash("Only pending requests can be rejected.")
-        else:
-            cursor.execute(
-                "UPDATE bookings SET booking_status='Rejected' WHERE id=%s AND booking_status='Pending'",
-                (booking_id,),
-            )
-            if cursor.rowcount == 0:
-                conn.rollback()
-                flash("This request was already handled.")
-            else:
-                cursor.execute("SELECT email FROM users WHERE id=%s", (record["passenger_id"],))
-                passenger = cursor.fetchone()
-                if passenger:
-                    cursor.execute(
-                        "INSERT INTO notifications (email, title, message, status) VALUES (%s, %s, %s, %s)",
-                        (passenger["email"], "Ride Booking Rejected",
-                         "Your ride booking request was rejected by the driver.", "Unread"),
-                    )
-                conn.commit()
-                flash("Booking rejected.")
-    except Exception:
-        conn.rollback()
-        flash("Could not reject the booking. Please try again.")
-    finally:
+    record = cursor.fetchone()
+
+    if not record:
         conn.close()
+        flash("Booking request not found.")
+        return redirect("/driver-requests")
 
+    # Driver security check
+    if record["driver_id"] != session["user_id"]:
+        conn.close()
+        flash("You are not authorized to manage this booking.")
+        return redirect("/driver-requests")
+
+    if record["booking_status"] == "Accepted":
+        conn.close()
+        flash("An accepted booking cannot be rejected.")
+        return redirect("/driver-requests")
+
+    if record["booking_status"] == "Rejected":
+        conn.close()
+        flash("This booking is already rejected.")
+        return redirect("/driver-requests")
+
+    # Reject booking
+    cursor.execute(
+        """
+        UPDATE bookings
+
+        SET booking_status='Rejected'
+
+        WHERE id=%s
+        """,
+        (
+            booking_id,
+        )
+    )
+    
+    
+    # Get passenger email
+    cursor.execute(
+    """
+    SELECT users.email
+    FROM bookings
+    INNER JOIN users
+        ON bookings.passenger_id = users.id
+    WHERE bookings.id=%s
+    """,
+    
+    (
+        booking_id,
+    )
+    )
+    
+    passenger = cursor.fetchone()
+
+    if passenger:
+        
+
+        cursor.execute(
+        """
+        INSERT INTO notifications
+        (
+            email,
+            title,
+            message,
+            status
+        )
+        VALUES (%s, %s, %s, %s)
+        """,
+        (
+            passenger["email"],
+            "Ride Booking Rejected",
+            "Your ride booking request was rejected by the driver.",
+            "Unread"
+        )
+        )
+
+    conn.commit()
+    conn.close()
+
+    flash("Booking rejected.")
     return redirect("/driver-requests")
-
 
 # =========================================================
 # GET PENDING BOOKING COUNT

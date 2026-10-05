@@ -42,7 +42,6 @@ Profile
         <!-- Profile Information -->
 
         <form method="POST" class="p-8">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <h2 class="text-xl font-bold text-gray-800 mb-6">
                 Personal Information
@@ -178,6 +177,122 @@ Profile
 
                 </div>
 
+
+                <!-- EMERGENCY CONTACT SECTION -->
+
+                <div class="md:col-span-2 mt-4">
+
+                    <div class="border-t border-gray-200 pt-6">
+
+                        <div class="flex items-center gap-3 mb-5">
+
+                            <div class="w-11 h-11 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+
+                                <i class="fas fa-phone-alt"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h2 class="text-xl font-bold text-gray-800">
+
+                                    Emergency Contact
+
+                                </h2>
+
+                                <p class="text-sm text-gray-500">
+
+                                    This contact will be used for RideMate SOS alerts.
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+                            <!-- Emergency Contact Name -->
+
+                            <div>
+
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">
+
+                                    Contact Name
+
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fas fa-user-friends absolute left-4 top-4 text-red-500"></i>
+
+                                    <input
+                                        type="text"
+                                        name="emergency_contact_name"
+                                        value="{{ user.emergency_contact_name or '' }}"
+                                        placeholder="e.g. Father, Mother, Brother"
+                                        class="w-full border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 rounded-xl py-3 pl-11 pr-4 outline-none"
+                                    >
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Emergency Contact Phone -->
+
+                            <div>
+
+                                <label class="block text-sm font-semibold text-gray-600 mb-2">
+
+                                    Mobile Number
+
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fas fa-phone absolute left-4 top-4 text-red-500"></i>
+
+                                    <input
+                                        type="tel"
+                                        name="emergency_contact_phone"
+                                        value="{{ user.emergency_contact_phone or '' }}"
+                                        placeholder="Enter mobile number"
+                                        maxlength="15"
+                                        class="w-full border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 rounded-xl py-3 pl-11 pr-4 outline-none"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-4 bg-red-50 border border-red-100 rounded-xl p-4">
+
+                            <div class="flex gap-3">
+
+                                <i class="fas fa-shield-alt text-red-500 mt-1"></i>
+
+                                <p class="text-sm text-red-700">
+
+                                    Your emergency contact will only be used when you trigger the
+                                    <strong>SOS</strong> feature during an active RideMate ride.
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
             </div>
 
 
@@ -192,7 +307,7 @@ Profile
 
                     <i class="fas fa-save mr-2"></i>
 
-                    Save Vehicle Number
+                    Save Profile
 
                 </button>
 

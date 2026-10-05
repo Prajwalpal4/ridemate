@@ -1,0 +1,1894 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+Ride Tracking
+{% endblock %}
+
+{% block page_title %}
+Ride Tracking
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700
+                text-white rounded-2xl p-6 shadow-lg mb-6">
+
+        <div class="flex flex-col md:flex-row
+                    md:items-center md:justify-between gap-4">
+
+            <div>
+
+                <div class="flex items-center gap-3">
+
+                    <div class="bg-white/20 p-3 rounded-xl">
+                        🚗
+                    </div>
+
+                    <div>
+
+                        <h1 class="text-2xl md:text-3xl font-bold">
+                            Ride in Progress
+                        </h1>
+
+                        <p class="text-blue-100 mt-1">
+                            Your driver has accepted your ride
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="bg-green-500 px-5 py-2 rounded-full
+                        font-bold text-sm">
+
+                ✓ ACCEPTED
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Route Information -->
+
+    <div class="grid lg:grid-cols-3 gap-6 mb-6">
+
+        <!-- Current Location -->
+
+        <div class="bg-white rounded-2xl shadow p-6">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 bg-blue-100
+                            text-blue-600 rounded-full
+                            flex items-center justify-center
+                            text-xl">
+
+                    📍
+
+                </div>
+
+                <div>
+
+                    <p class="text-sm text-gray-500">
+                        Pickup / Starting Point
+                    </p>
+
+                    <h2 class="font-bold text-lg">
+                        {{ ride.from_location }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Route -->
+
+        <div class="bg-white rounded-2xl shadow p-6">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 bg-purple-100
+                            text-purple-600 rounded-full
+                            flex items-center justify-center
+                            text-xl">
+
+                    🛣️
+
+                </div>
+
+                <div>
+
+                    <p class="text-sm text-gray-500">
+                        Route
+                    </p>
+
+                    <h2 class="font-bold text-lg">
+                        {{ ride.from_location }}
+                        →
+                        {{ ride.to_location }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Drop Location -->
+
+        <div class="bg-white rounded-2xl shadow p-6">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 bg-red-100
+                            text-red-600 rounded-full
+                            flex items-center justify-center
+                            text-xl">
+
+                    🏁
+
+                </div>
+
+                <div>
+
+                    <p class="text-sm text-gray-500">
+                        Drop-off Location
+                    </p>
+
+                    <h2 class="font-bold text-lg">
+                        {{ ride.to_location }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Map -->
+
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+
+        <div class="p-5 border-b">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <h2 class="text-xl font-bold">
+                        🗺️ Live Ride Map
+                    </h2>
+
+                    <p class="text-gray-500 text-sm mt-1">
+                        Live location within Nagpur, Maharashtra
+                    </p>
+
+                </div>
+
+                <div class="flex items-center gap-2
+                            text-green-600 text-sm font-semibold">
+
+                    <span class="w-3 h-3 bg-green-500
+                                 rounded-full animate-pulse">
+                    </span>
+
+                    Tracking
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Map -->
+
+        <div id="map" class="h-[500px] w-full"></div>
+
+
+        <!-- Status Message -->
+
+        <div
+            id="locationStatus"
+            class="hidden mx-5 mt-5 p-4 rounded-xl text-sm font-medium">
+        </div>
+
+
+        <!-- ETA + Distance -->
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
+
+            <!-- ETA -->
+
+            <div class="bg-blue-50 rounded-xl p-4 text-center">
+
+                <div class="text-sm text-gray-500">
+                    ⏱️ Estimated Time
+                </div>
+
+                <div
+                    id="eta"
+                    class="text-2xl font-bold text-blue-600 mt-1">
+
+                    -- min
+
+                </div>
+
+            </div>
+
+
+            <!-- Distance -->
+
+            <div class="bg-green-50 rounded-xl p-4 text-center">
+
+                <div class="text-sm text-gray-500">
+                    📏 Distance Remaining
+                </div>
+
+                <div
+                    id="distance"
+                    class="text-2xl font-bold text-green-600 mt-1">
+
+                    -- km
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Ride Details -->
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+
+        <!-- Driver -->
+
+        <div class="bg-white rounded-2xl shadow p-6">
+
+            <h2 class="text-xl font-bold mb-5">
+                👨‍✈️ Driver Details
+            </h2>
+
+            <div class="space-y-4">
+
+                <div class="flex justify-between
+                            border-b pb-3">
+
+                    <span class="text-gray-500">
+                        Driver
+                    </span>
+
+                    <span class="font-semibold">
+                        {{ ride.driver_name }}
+                    </span>
+
+                </div>
+
+                <div class="flex justify-between
+                            border-b pb-3">
+
+                    <span class="text-gray-500">
+                        Vehicle
+                    </span>
+
+                    <span class="font-semibold">
+                        {{ ride.vehicle_number }}
+                    </span>
+
+                </div>
+
+                <div class="flex justify-between">
+
+                    <span class="text-gray-500">
+                        Booking Status
+                    </span>
+
+                    <span class="text-green-600 font-bold">
+                        Accepted
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Ride Details -->
+
+        <div class="bg-white rounded-2xl shadow p-6">
+
+            <h2 class="text-xl font-bold mb-5">
+                📋 Ride Details
+            </h2>
+
+            <div class="space-y-4">
+
+                <div class="flex justify-between
+                            border-b pb-3">
+
+                    <span class="text-gray-500">
+                        Date
+                    </span>
+
+                    <span class="font-semibold">
+                        {{ ride.ride_date }}
+                    </span>
+
+                </div>
+
+                <div class="flex justify-between
+                            border-b pb-3">
+
+                    <span class="text-gray-500">
+                        Time
+                    </span>
+
+                    <span class="font-semibold">
+                        {{ ride.ride_time }}
+                    </span>
+
+                </div>
+
+                <div class="flex justify-between">
+
+                    <span class="text-gray-500">
+                        Destination
+                    </span>
+
+                    <span class="font-semibold">
+                        {{ ride.to_location }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Navigation + SOS -->
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+        <!-- Find Location -->
+
+        <button
+            onclick="getCurrentLocation()"
+            class="bg-blue-600 hover:bg-blue-700
+                   text-white py-4 rounded-xl
+                   font-bold transition shadow">
+
+            📍 Find My Location
+
+        </button>
+
+
+        <!-- Back -->
+
+        <a
+            href="/my-bookings"
+            class="bg-gray-200 hover:bg-gray-300
+                   text-gray-800 py-4 rounded-xl
+                   font-bold text-center transition
+                   flex items-center justify-center">
+
+            ← Back to My Bookings
+
+        </a>
+
+
+        <!-- SOS -->
+
+        <button
+            type="button"
+            onclick="openSOSConfirmation()"
+            id="sosButton"
+            class="bg-red-600 hover:bg-red-700
+                   active:bg-red-800
+                   text-white py-4 rounded-xl
+                   font-bold text-lg shadow-lg
+                   transition">
+
+            🚨 SOS — Emergency Alert
+
+        </button>
+
+    </div>
+
+
+    <!-- SOS Information -->
+
+    <div class="bg-red-50 border border-red-200
+                rounded-2xl p-5 mb-6">
+
+        <div class="flex items-start gap-4">
+
+            <div class="w-12 h-12 bg-red-100
+                        text-red-600 rounded-full
+                        flex items-center justify-center
+                        text-xl flex-shrink-0">
+
+                🚨
+
+            </div>
+
+            <div>
+
+                <h2 class="font-bold text-red-800 text-lg">
+                    Emergency Assistance
+                </h2>
+
+                <p class="text-sm text-red-700 mt-1">
+                    If you feel unsafe or there is an emergency,
+                    use the SOS button. Your current GPS location
+                    will be captured when the alert is sent.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SOS CONFIRMATION MODAL
+     ========================================================= -->
+
+<div
+    id="sosModal"
+    class="fixed inset-0 bg-black bg-opacity-50
+           hidden items-center justify-center
+           z-[9999] p-4">
+
+    <div class="bg-white rounded-2xl shadow-2xl
+                max-w-md w-full p-6">
+
+        <div class="flex justify-center mb-4">
+
+            <div class="w-16 h-16 bg-red-100
+                        text-red-600 rounded-full
+                        flex items-center justify-center
+                        text-3xl">
+
+                🚨
+
+            </div>
+
+        </div>
+
+
+        <h2 class="text-2xl font-bold text-gray-800 text-center">
+            Emergency SOS
+        </h2>
+
+
+        <p class="text-gray-600 text-center mt-3">
+            Are you sure you want to send an emergency alert?
+        </p>
+
+
+        <p class="text-sm text-gray-500 text-center mt-2">
+            Your current GPS location and ride information
+            will be used for the emergency alert.
+        </p>
+
+
+        <div class="grid grid-cols-2 gap-3 mt-6">
+
+            <button
+                type="button"
+                onclick="closeSOSConfirmation()"
+                class="bg-gray-100 hover:bg-gray-200
+                       text-gray-700 py-3 rounded-xl
+                       font-semibold transition">
+
+                Cancel
+
+            </button>
+
+
+            <button
+                type="button"
+                onclick="sendSOS()"
+                id="confirmSOSButton"
+                class="bg-red-600 hover:bg-red-700
+                       text-white py-3 rounded-xl
+                       font-bold transition">
+
+                🚨 Send SOS
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SOS SUCCESS MODAL
+     ========================================================= -->
+
+<div
+    id="sosSuccessModal"
+    class="fixed inset-0 bg-black bg-opacity-50
+           hidden items-center justify-center
+           z-[9999] p-4">
+
+    <div class="bg-white rounded-2xl shadow-2xl
+                max-w-md w-full p-6">
+
+        <div class="flex justify-center mb-4">
+
+            <div class="w-16 h-16 bg-green-100
+                        text-green-600 rounded-full
+                        flex items-center justify-center
+                        text-3xl">
+
+                ✓
+
+            </div>
+
+        </div>
+
+
+        <h2 class="text-2xl font-bold text-gray-800 text-center">
+            SOS Alert Sent
+        </h2>
+
+
+        <p class="text-gray-600 text-center mt-3">
+            Your emergency alert has been recorded successfully.
+        </p>
+
+
+        <button
+            type="button"
+            onclick="closeSOSSuccess()"
+            class="w-full bg-blue-600 hover:bg-blue-700
+                   text-white py-3 rounded-xl
+                   font-semibold mt-6">
+
+            Close
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- Leaflet CSS -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+
+<!-- Leaflet JS -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+/* =========================================================
+   NAGPUR CONFIGURATION
+   ========================================================= */
+
+const NAGPUR_CENTER = {
+    lat: 21.1458,
+    lng: 79.0882
+};
+
+const NAGPUR_RADIUS_KM = 50;
+
+
+/* =========================================================
+   MAP INITIALIZATION
+   ========================================================= */
+
+const map = L.map("map").setView(
+    [
+        NAGPUR_CENTER.lat,
+        NAGPUR_CENTER.lng
+    ],
+    12
+);
+
+
+L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        attribution:
+            '&copy; OpenStreetMap contributors'
+    }
+).addTo(map);
+
+
+/* =========================================================
+   VARIABLES
+   ========================================================= */
+
+let userMarker = null;
+let dropoffMarker = null;
+let routeLine = null;
+
+let currentLat = null;
+let currentLng = null;
+
+let watchId = null;
+
+let lastRouteTime = 0;
+
+const ROUTE_UPDATE_INTERVAL = 10000;
+
+
+/* =========================================================
+   DESTINATION
+   ========================================================= */
+
+const destination =
+    {{ ride.to_location|tojson }};
+
+
+/* =========================================================
+   STATUS MESSAGE
+   ========================================================= */
+
+function showStatus(
+    message,
+    type = "info"
+) {
+
+    const status =
+        document.getElementById(
+            "locationStatus"
+        );
+
+
+    status.innerHTML = message;
+
+
+    status.classList.remove(
+        "hidden",
+        "bg-blue-100",
+        "text-blue-800",
+        "bg-red-100",
+        "text-red-800",
+        "bg-green-100",
+        "text-green-800",
+        "bg-yellow-100",
+        "text-yellow-800"
+    );
+
+
+    if (type === "error") {
+
+        status.classList.add(
+            "bg-red-100",
+            "text-red-800"
+        );
+
+    }
+
+    else if (type === "success") {
+
+        status.classList.add(
+            "bg-green-100",
+            "text-green-800"
+        );
+
+    }
+
+    else if (type === "warning") {
+
+        status.classList.add(
+            "bg-yellow-100",
+            "text-yellow-800"
+        );
+
+    }
+
+    else {
+
+        status.classList.add(
+            "bg-blue-100",
+            "text-blue-800"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DISTANCE CALCULATION
+   YOUR FUNCTION
+   RETURNS DISTANCE IN METERS
+   ========================================================= */
+
+function calculateDistance(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+    const R = 6371e3;
+
+
+    const φ1 =
+        lat1 *
+        Math.PI /
+        180;
+
+
+    const φ2 =
+        lat2 *
+        Math.PI /
+        180;
+
+
+    const Δφ =
+        (lat2 - lat1) *
+        Math.PI /
+        180;
+
+
+    const Δλ =
+        (lon2 - lon1) *
+        Math.PI /
+        180;
+
+
+    const a =
+        Math.sin(Δφ / 2) *
+        Math.sin(Δφ / 2) +
+
+        Math.cos(φ1) *
+        Math.cos(φ2) *
+
+        Math.sin(Δλ / 2) *
+        Math.sin(Δλ / 2);
+
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+
+    return R * c;
+
+}
+
+
+/* =========================================================
+   CHECK WHETHER LOCATION IS INSIDE NAGPUR
+   ========================================================= */
+
+function isInsideNagpur(
+    lat,
+    lng
+) {
+
+    const distance =
+        calculateDistance(
+            NAGPUR_CENTER.lat,
+            NAGPUR_CENTER.lng,
+            lat,
+            lng
+        );
+
+
+    /*
+     * calculateDistance() returns meters.
+     *
+     * NAGPUR_RADIUS_KM is kilometers.
+     *
+     * Convert 50 km to 50,000 meters.
+     */
+
+    return distance <=
+        NAGPUR_RADIUS_KM * 1000;
+
+}
+
+
+/* =========================================================
+   DRAW NAGPUR SERVICE AREA
+   ========================================================= */
+
+const nagpurServiceArea =
+    L.circle(
+        [
+            NAGPUR_CENTER.lat,
+            NAGPUR_CENTER.lng
+        ],
+        {
+
+            radius:
+                NAGPUR_RADIUS_KM * 1000,
+
+            color:
+                "#2563eb",
+
+            fillColor:
+                "#3b82f6",
+
+            fillOpacity:
+                0.05,
+
+            weight:
+                2
+
+        }
+    ).addTo(map);
+
+
+nagpurServiceArea.bindPopup(
+
+    "<b>Nagpur Ride Service Area</b><br>" +
+
+    "Tracking is available within " +
+
+    NAGPUR_RADIUS_KM +
+
+    " km of Nagpur."
+
+);
+
+
+/* =========================================================
+   DROP-OFF LOCATION
+   ========================================================= */
+
+async function findDropoffLocation() {
+
+    try {
+
+        showStatus(
+            "🔍 Finding your destination in Nagpur...",
+            "info"
+        );
+
+
+        const searchQuery =
+            destination +
+            ", Nagpur, Maharashtra, India";
+
+
+        const response =
+            await fetch(
+
+                "https://photon.komoot.io/api/?q=" +
+
+                encodeURIComponent(
+                    searchQuery
+                ) +
+
+                "&limit=5"
+
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Destination search failed."
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data.features ||
+            data.features.length === 0
+        ) {
+
+            showStatus(
+                "❌ Destination could not be found in Nagpur.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        let selectedFeature =
+            null;
+
+
+        for (
+            const feature
+            of data.features
+        ) {
+
+            if (
+                !feature.geometry ||
+                !feature.geometry.coordinates
+            ) {
+
+                continue;
+
+            }
+
+
+            const coordinates =
+                feature.geometry.coordinates;
+
+
+            const lng =
+                coordinates[0];
+
+
+            const lat =
+                coordinates[1];
+
+
+            if (
+                isInsideNagpur(
+                    lat,
+                    lng
+                )
+            ) {
+
+                selectedFeature =
+                    feature;
+
+                break;
+
+            }
+
+        }
+
+
+        if (!selectedFeature) {
+
+            showStatus(
+                "❌ This destination is outside the Nagpur ride service area.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const coordinates =
+            selectedFeature.geometry.coordinates;
+
+
+        const dropoffLng =
+            coordinates[0];
+
+
+        const dropoffLat =
+            coordinates[1];
+
+
+        if (dropoffMarker) {
+
+            map.removeLayer(
+                dropoffMarker
+            );
+
+        }
+
+
+        dropoffMarker =
+            L.marker(
+                [
+                    dropoffLat,
+                    dropoffLng
+                ]
+            )
+            .addTo(map)
+            .bindPopup(
+
+                "<b>🏁 Drop-off Location</b><br>" +
+
+                destination +
+
+                "<br><small>Nagpur, Maharashtra</small>"
+
+            );
+
+
+        dropoffMarker.openPopup();
+
+
+        if (
+            currentLat !== null &&
+            currentLng !== null
+        ) {
+
+            calculateRoute(
+                currentLat,
+                currentLng,
+                dropoffLat,
+                dropoffLng
+            );
+
+        }
+
+        else {
+
+            map.setView(
+                [
+                    dropoffLat,
+                    dropoffLng
+                ],
+                13
+            );
+
+        }
+
+
+        showStatus(
+            "✅ Destination found inside Nagpur.",
+            "success"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Drop-off geocoding error:",
+            error
+        );
+
+
+        showStatus(
+            "❌ Unable to find the destination. Please try again.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CURRENT LOCATION TRACKING
+   ========================================================= */
+
+function startTracking() {
+
+    if (!navigator.geolocation) {
+
+        showStatus(
+            "❌ Geolocation is not supported by your browser.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    showStatus(
+        "📍 Getting your current location...",
+        "info"
+    );
+
+
+    if (watchId !== null) {
+
+        navigator.geolocation.clearWatch(
+            watchId
+        );
+
+    }
+
+
+    watchId =
+        navigator.geolocation.watchPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+
+                const longitude =
+                    position.coords.longitude;
+
+
+                /*
+                 * Check Nagpur boundary.
+                 */
+
+                if (
+                    !isInsideNagpur(
+                        latitude,
+                        longitude
+                    )
+                ) {
+
+                    showStatus(
+                        "⚠️ Your current location is outside the Nagpur ride service area.",
+                        "warning"
+                    );
+
+
+                    if (userMarker) {
+
+                        map.removeLayer(
+                            userMarker
+                        );
+
+                        userMarker =
+                            null;
+
+                    }
+
+                    return;
+
+                }
+
+
+                currentLat =
+                    latitude;
+
+
+                currentLng =
+                    longitude;
+
+
+                /*
+                 * Create user marker.
+                 */
+
+                if (!userMarker) {
+
+                    userMarker =
+                        L.marker(
+                            [
+                                currentLat,
+                                currentLng
+                            ]
+                        )
+                        .addTo(map)
+                        .bindPopup(
+                            "<b>📍 You are here</b><br>" +
+                            "Nagpur, Maharashtra"
+                        );
+
+                }
+
+                else {
+
+                    userMarker.setLatLng(
+                        [
+                            currentLat,
+                            currentLng
+                        ]
+                    );
+
+                }
+
+
+                /*
+                 * Update popup.
+                 */
+
+                userMarker.setPopupContent(
+
+                    "<b>📍 You are here</b><br>" +
+
+                    "Nagpur, Maharashtra<br>" +
+
+                    "<small>" +
+
+                    currentLat.toFixed(6) +
+
+                    ", " +
+
+                    currentLng.toFixed(6) +
+
+                    "</small>"
+
+                );
+
+
+                /*
+                 * Update route.
+                 */
+
+                if (dropoffMarker) {
+
+                    const destinationPosition =
+                        dropoffMarker.getLatLng();
+
+
+                    const now =
+                        Date.now();
+
+
+                    if (
+                        now -
+                        lastRouteTime >=
+                        ROUTE_UPDATE_INTERVAL
+                    ) {
+
+                        lastRouteTime =
+                            now;
+
+
+                        calculateRoute(
+
+                            currentLat,
+
+                            currentLng,
+
+                            destinationPosition.lat,
+
+                            destinationPosition.lng
+
+                        );
+
+                    }
+
+                }
+
+
+                showStatus(
+                    "🟢 Live location tracking active in Nagpur.",
+                    "success"
+                );
+
+            },
+
+
+            function(error) {
+
+                console.error(
+                    "Location error:",
+                    error
+                );
+
+
+                let message =
+                    "Unable to get your location.";
+
+
+                if (
+                    error.code ===
+                    error.PERMISSION_DENIED
+                ) {
+
+                    message =
+                        "❌ Location permission was denied. Please allow location access in your browser.";
+
+                }
+
+                else if (
+                    error.code ===
+                    error.POSITION_UNAVAILABLE
+                ) {
+
+                    message =
+                        "❌ Your location is currently unavailable.";
+
+                }
+
+                else if (
+                    error.code ===
+                    error.TIMEOUT
+                ) {
+
+                    message =
+                        "⏳ Location request timed out. Trying again...";
+
+                }
+
+
+                showStatus(
+                    message,
+                    "error"
+                );
+
+            },
+
+
+            {
+
+                enableHighAccuracy:
+                    true,
+
+                maximumAge:
+                    5000,
+
+                timeout:
+                    10000
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   ROUTE + ETA + DISTANCE
+   ========================================================= */
+
+async function calculateRoute(
+    startLat,
+    startLng,
+    endLat,
+    endLng
+) {
+
+    if (
+        !isInsideNagpur(
+            startLat,
+            startLng
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !isInsideNagpur(
+            endLat,
+            endLng
+        )
+    ) {
+
+        showStatus(
+            "❌ Destination is outside the Nagpur service area.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const url =
+
+            "https://router.project-osrm.org/route/v1/driving/" +
+
+            startLng +
+            "," +
+            startLat +
+
+            ";" +
+
+            endLng +
+            "," +
+            endLat +
+
+            "?overview=full&geometries=geojson";
+
+
+        const response =
+            await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Routing service failed."
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            data.routes &&
+            data.routes.length > 0
+        ) {
+
+            const route =
+                data.routes[0];
+
+
+            /*
+             * Remove old route.
+             */
+
+            if (routeLine) {
+
+                map.removeLayer(
+                    routeLine
+                );
+
+            }
+
+
+            /*
+             * Draw new route.
+             */
+
+            routeLine =
+                L.geoJSON(
+                    route.geometry,
+                    {
+
+                        style: {
+
+                            weight: 6,
+
+                            opacity: 0.8
+
+                        }
+
+                    }
+                ).addTo(map);
+
+
+            /*
+             * ETA.
+             */
+
+            const durationMinutes =
+                Math.ceil(
+                    route.duration / 60
+                );
+
+
+            /*
+             * OSRM returns distance
+             * in meters.
+             *
+             * Convert to kilometers.
+             */
+
+            const distanceKm =
+                (
+                    route.distance / 1000
+                ).toFixed(1);
+
+
+            /*
+             * Update ETA.
+             */
+
+            document.getElementById(
+                "eta"
+            ).innerHTML =
+                durationMinutes +
+                " min";
+
+
+            /*
+             * Update distance.
+             */
+
+            document.getElementById(
+                "distance"
+            ).innerHTML =
+                distanceKm +
+                " km";
+
+
+            /*
+             * Fit map to route.
+             */
+
+            if (
+                !routeLine._alreadyFitted
+            ) {
+
+                map.fitBounds(
+                    routeLine.getBounds(),
+                    {
+                        padding: [
+                            30,
+                            30
+                        ]
+                    }
+                );
+
+
+                routeLine._alreadyFitted =
+                    true;
+
+            }
+
+        }
+
+        else {
+
+            console.log(
+                "No route found."
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Routing error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FIND MY LOCATION BUTTON
+   ========================================================= */
+
+function getCurrentLocation() {
+
+    if (
+        currentLat !== null &&
+        currentLng !== null
+    ) {
+
+        if (
+            !isInsideNagpur(
+                currentLat,
+                currentLng
+            )
+        ) {
+
+            showStatus(
+                "⚠️ Your location is outside the Nagpur service area.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        map.setView(
+            [
+                currentLat,
+                currentLng
+            ],
+            16
+        );
+
+
+        if (userMarker) {
+
+            userMarker.openPopup();
+
+        }
+
+    }
+
+    else {
+
+        showStatus(
+            "📍 Getting your current location...",
+            "info"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SOS CONFIRMATION
+   ========================================================= */
+
+function openSOSConfirmation() {
+
+    const modal =
+        document.getElementById(
+            "sosModal"
+        );
+
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+
+    modal.classList.add(
+        "flex"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE SOS CONFIRMATION
+   ========================================================= */
+
+function closeSOSConfirmation() {
+
+    const modal =
+        document.getElementById(
+            "sosModal"
+        );
+
+
+    modal.classList.add(
+        "hidden"
+    );
+
+
+    modal.classList.remove(
+        "flex"
+    );
+
+}
+
+
+/* =========================================================
+   SEND SOS
+   ========================================================= */
+
+async function sendSOS() {
+
+    const button =
+        document.getElementById(
+            "confirmSOSButton"
+        );
+
+
+    /*
+     * Prevent double click.
+     */
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML =
+        "⏳ Sending...";
+
+
+    /*
+     * Make sure GPS exists.
+     */
+
+    if (
+        currentLat === null ||
+        currentLng === null
+    ) {
+
+        alert(
+            "Waiting for your GPS location. Please try again."
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            "🚨 Send SOS";
+
+
+        return;
+
+    }
+
+
+    /*
+     * Make sure location is
+     * inside Nagpur.
+     */
+
+    if (
+        !isInsideNagpur(
+            currentLat,
+            currentLng
+        )
+    ) {
+
+        alert(
+            "Your current location is outside the Nagpur service area."
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            "🚨 Send SOS";
+
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/send-sos",
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            booking_id:
+                                {{ ride.booking_id }},
+
+                            latitude:
+                                currentLat,
+
+                            longitude:
+                                currentLng
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            closeSOSConfirmation();
+
+
+            const successModal =
+                document.getElementById(
+                    "sosSuccessModal"
+                );
+
+
+            successModal.classList.remove(
+                "hidden"
+            );
+
+
+            successModal.classList.add(
+                "flex"
+            );
+
+        }
+
+        else {
+
+            alert(
+                data.message ||
+                "Unable to send SOS."
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "SOS Error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to the SOS service."
+        );
+
+    }
+
+
+    button.disabled =
+        false;
+
+
+    button.innerHTML =
+        "🚨 Send SOS";
+
+}
+
+
+/* =========================================================
+   CLOSE SUCCESS MODAL
+   ========================================================= */
+
+function closeSOSSuccess() {
+
+    const modal =
+        document.getElementById(
+            "sosSuccessModal"
+        );
+
+
+    modal.classList.add(
+        "hidden"
+    );
+
+
+    modal.classList.remove(
+        "flex"
+    );
+
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        /*
+         * Find destination.
+         */
+
+        findDropoffLocation();
+
+
+        /*
+         * Start GPS tracking.
+         */
+
+        startTracking();
+
+    }
+);
+
+</script>
+
+{% endblock %}

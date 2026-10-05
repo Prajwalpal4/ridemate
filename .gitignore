@@ -1,7 +1,9 @@
 __pycache__/
 *.py[cod]
-.env
 .venv/
-database/ridemate.db
+venv/
+.env
+.env.*
+database/*.db
 uploads/*
 !uploads/.gitkeep

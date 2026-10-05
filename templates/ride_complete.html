@@ -1,0 +1,442 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+
+<!-- Ride Completed -->
+<div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+
+    <div class="text-6xl mb-4">
+        🎉
+    </div>
+
+    <h1 class="text-3xl font-bold text-gray-800">
+        Ride Completed!
+    </h1>
+
+    <p class="text-gray-500 mt-2">
+        You have successfully reached your destination.
+    </p>
+
+    <!-- Driver -->
+    <div class="mt-6 bg-gray-50 rounded-xl p-4">
+        <p class="text-sm text-gray-500">Your Ride</p>
+
+        <p class="font-semibold text-lg text-gray-800">
+            {{ ride.driver_name }}
+        </p>
+
+        <p class="text-sm text-gray-500 mt-1">
+            {{ ride.from_location }} → {{ ride.to_location }}
+        </p>
+    </div>
+
+</div>
+
+
+<!-- Rating -->
+<div class="bg-white rounded-2xl shadow-lg p-8 mt-6 text-center">
+
+    <h2 class="text-2xl font-bold text-gray-800">
+        ⭐ Rate Your Ride
+    </h2>
+
+    <p class="text-gray-500 mt-2">
+        How was your ride experience?
+    </p>
+
+    <div class="flex justify-center gap-3 mt-6">
+
+        <button onclick="selectRating(1)"
+                class="star text-5xl text-gray-300 hover:text-yellow-400 transition"
+                data-rating="1">
+            ★
+        </button>
+
+        <button onclick="selectRating(2)"
+                class="star text-5xl text-gray-300 hover:text-yellow-400 transition"
+                data-rating="2">
+            ★
+        </button>
+
+        <button onclick="selectRating(3)"
+                class="star text-5xl text-gray-300 hover:text-yellow-400 transition"
+                data-rating="3">
+            ★
+        </button>
+
+        <button onclick="selectRating(4)"
+                class="star text-5xl text-gray-300 hover:text-yellow-400 transition"
+                data-rating="4">
+            ★
+        </button>
+
+        <button onclick="selectRating(5)"
+                class="star text-5xl text-gray-300 hover:text-yellow-400 transition"
+                data-rating="5">
+            ★
+        </button>
+
+    </div>
+
+    <p id="ratingText"
+       class="text-sm text-gray-500 mt-3">
+        Click a star to rate
+    </p>
+
+    <button onclick="submitRating()"
+            id="submitRatingBtn"
+            class="hidden mt-5 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold">
+        Submit Rating
+    </button>
+
+</div>
+
+
+<!-- Charity -->
+<div id="charitySection"
+     class="bg-white rounded-2xl shadow-lg p-8 mt-6 text-center">
+
+    <div class="text-4xl">
+        🌱
+    </div>
+
+    <h2 class="text-2xl font-bold text-gray-800 mt-3">
+        Make Your Ride More Meaningful
+    </h2>
+
+    <p class="text-gray-500 mt-2">
+        Would you like to support charity after completing your ride?
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+
+        <!-- IMPORTANT: This now calls doCharity() -->
+        <button onclick="doCharity()"
+                class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center">
+            🌱 Do Charity
+        </button>
+
+        <button onclick="noThanks()"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold transition">
+            No Thanks
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- Charity Message -->
+<div id="charityMessage"
+     class="hidden bg-green-50 border border-green-200 rounded-2xl p-6 mt-6 text-center">
+
+    <div class="text-4xl">
+        💚
+    </div>
+
+    <h2 class="text-xl font-bold text-green-700 mt-2">
+        Thank You!
+    </h2>
+
+    <p class="text-green-600 mt-2">
+        Your support can help make a positive difference.
+    </p>
+
+</div>
+
+
+</div>
+
+<script>
+
+let selectedRating = 0;
+
+
+/* =========================
+   RATING
+========================= */
+
+function selectRating(rating) {
+
+    selectedRating = rating;
+
+    const stars = document.querySelectorAll(".star");
+
+    stars.forEach((star, index) => {
+
+        if (index < rating) {
+
+            star.classList.remove("text-gray-300");
+            star.classList.add("text-yellow-400");
+
+        } else {
+
+            star.classList.remove("text-yellow-400");
+            star.classList.add("text-gray-300");
+
+        }
+
+    });
+
+
+    const ratingText = document.getElementById("ratingText");
+
+    const messages = {
+        1: "Very Poor 😞",
+        2: "Poor 😕",
+        3: "Average 🙂",
+        4: "Good 😊",
+        5: "Excellent! 🤩"
+    };
+
+    ratingText.innerText = messages[rating];
+
+
+    document
+        .getElementById("submitRatingBtn")
+        .classList.remove("hidden");
+}
+
+
+/* =========================
+   SUBMIT RATING
+========================= */
+
+async function submitRating() {
+
+    if (selectedRating === 0) {
+
+        alert("Please select a rating first.");
+        return;
+
+    }
+
+
+    const button = document.getElementById("submitRatingBtn");
+
+    button.disabled = true;
+    button.innerText = "Submitting...";
+
+
+    try {
+
+        const response = await fetch("/submit-rating", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                booking_id: {{ ride.booking_id }},
+                rating: selectedRating
+
+            })
+
+        });
+
+
+        const result = await response.json();
+
+
+        if (result.success) {
+
+            button.innerText = "Rating Submitted ✓";
+
+            button.classList.remove("bg-blue-600");
+            button.classList.add("bg-green-600");
+
+            document.getElementById("ratingText").innerText =
+                "Thank you for rating your ride! ⭐";
+
+        } else {
+
+            alert(result.message);
+
+            button.disabled = false;
+            button.innerText = "Submit Rating";
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Something went wrong while submitting the rating.");
+
+        button.disabled = false;
+        button.innerText = "Submit Rating";
+
+    }
+
+}
+
+
+/* =========================
+   CHARITY VIDEO
+========================= */
+
+function doCharity() {
+
+    const section = document.getElementById("charitySection");
+
+
+    section.innerHTML = `
+
+        <div class="fixed inset-0 z-[99999] bg-black flex items-center justify-center">
+
+            <video
+                id="charityVideo"
+                autoplay
+                muted
+                playsinline
+                class="w-screen h-screen object-cover"
+            >
+
+                <source
+                    src="/static/images/ridemate.mp4"
+                    type="video/mp4"
+                >
+
+                Your browser does not support video playback.
+
+            </video>
+
+
+            <!-- Close button -->
+            <button
+                onclick="closeCharityVideo()"
+                class="absolute top-5 right-5 z-[100000] bg-black/60 hover:bg-black/80 text-white text-2xl w-12 h-12 rounded-full"
+            >
+                ✕
+            </button>
+
+        </div>
+
+    `;
+
+
+    const video = document.getElementById("charityVideo");
+
+
+    /* Start video */
+
+    video.play().catch(function(error) {
+
+        console.error("Video playback failed:", error);
+
+    });
+
+
+    /* Try to enter real fullscreen */
+
+    if (video.requestFullscreen) {
+
+        video.requestFullscreen().catch(function(error) {
+
+            console.log("Fullscreen permission denied:", error);
+
+        });
+
+    }
+
+
+    /* When video finishes */
+
+    video.addEventListener("ended", function() {
+
+        closeCharityVideo();
+
+    });
+
+}
+
+
+/* =========================
+   CLOSE CHARITY VIDEO
+========================= */
+
+function closeCharityVideo() {
+
+    /* Exit browser fullscreen */
+
+    if (document.fullscreenElement) {
+
+        document.exitFullscreen().catch(function(error) {
+
+            console.log(error);
+
+        });
+
+    }
+
+
+    /* Restore charity section */
+
+    document.getElementById("charitySection").innerHTML = `
+
+        <div class="text-4xl">
+            💚
+        </div>
+
+        <h2 class="text-xl font-bold text-green-700 mt-3">
+            Thank You!
+        </h2>
+
+        <p class="text-green-600 mt-2">
+            Thank you for supporting a meaningful cause.
+        </p>
+
+        <a href="/dashboard"
+           class="inline-block mt-5 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold">
+
+            Go to Dashboard
+
+        </a>
+
+    `;
+
+}
+
+
+/* =========================
+   NO THANKS
+========================= */
+
+function noThanks() {
+
+    document
+        .getElementById("charitySection")
+        .innerHTML = `
+
+            <div class="text-4xl">
+                👍
+            </div>
+
+            <h2 class="text-xl font-bold text-gray-800 mt-3">
+                No Problem!
+            </h2>
+
+            <p class="text-gray-500 mt-2">
+                Thank you for using RideMate.
+            </p>
+
+            <a href="/dashboard"
+               class="inline-block mt-5 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold">
+
+                Go to Dashboard
+
+            </a>
+
+        `;
+
+}
+
+</script>
+
+{% endblock %}
